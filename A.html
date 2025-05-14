@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>World Time Zones - Coded by Sahar Amiri</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+  }
+  h1 {
+    text-align: center;
+  }
+  .time-section {
+    margin-bottom: 20px;
+  }
+  label {
+    font-weight: bold;
+  }
+  select {
+    margin-left: 10px;
+  }
+  .locations {
+    margin-top: 10px;
+  }
+  a {
+    display: inline-block;
+    margin-top: 10px;
+    color: blue;
+    text-decoration: underline;
+  }
+</style>
+</head>
+<body>
+<h1>World Time Zones - Coded by Sahar Amiri</h1>
+
+<!-- Select for user location -->
+<div class="time-section" id="user-location-section">
+  <label for="user-location">Your Current Location:</label>
+  <span id="user-time"></span>
+  <div class="locations" id="user-location-link"></div>
+</div>
+
+<!-- Predefined time zones -->
+<div class="time-section">
+  <h2>Different Dates and Times in Various Locations</h2>
+  <div id="dates-times"></div>
+</div>
+
+<!-- Select element for location choice -->
+<div class="time-section">
+  <label for="location-select">Select a Location:</label>
+  <select id="location-select">
+    <option value="">--Choose a location--</option>
+    <option value="America/New_York">New York, USA</option>
+    <option value="Europe/London">London, UK</option>
+    <option value="Asia/Tokyo">Tokyo, Japan</option>
+  </select>
+</div>
+
+<!-- Display selected location time -->
+<div class="time-section" id="selected-location-section" style="display:none;">
+  <h2>Selected Location</h2>
+  <div id="selected-location-time"></div>
+  <div id="selected-location-link"></div>
+</div>
+
+<script>
+// Utility function to format date and time
+function formatDateTime(date) {
+  return date.toLocaleString();
+}
+
+// List of locations for the 3 different date/time displays
+const locations = [
+  { city: 'New York', timezone: 'America/New_York' },
+  { city: 'London', timezone: 'Europe/London' },
+  { city: 'Tokyo', timezone: 'Asia/Tokyo' }
+];
+
+// Function to display three different date/time locations
+function displayDifferentLocations() {
+  const container = document.getElementById('dates-times');
+  container.innerHTML = '';
+  locations.forEach(loc => {
+    const now = new Date();
+    const options = { timeZone: loc.timezone, hour: '2-digit', minute: '2-digit', second: '2-digit', year: 'numeric', month: 'numeric', day: 'numeric' };
+    const dateStr = now.toLocaleString('en-US', options);
+    const div = document.createElement('div');
+    div.innerHTML = `<strong>${loc.city} (${loc.timezone}):</strong> ${dateStr}`;
+    container.appendChild(div);
+  });
+}
+
+// Function to update user's current location time
+function updateUserLocation() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(position => {
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+      // Use a free API for reverse geocoding to get city
+      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+        .then(res => res.json())
+        .then(data => {
+          const city = data.address.city || data.address.town || data.address.village || data.display_name;
+          const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          const now = new Date();
+          const options = { timeZone: timezone, year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+          const localTimeStr = now.toLocaleString('en-US', options);
+          document.getElementById('user-time').textContent = localTimeStr;
+
+          // Bonus: Show link to homepage (assuming homepage is current page)
+          const linkDiv = document.getElementById('user-location-link');
+          linkDiv.innerHTML = `<a href="index.html">Go to Homepage</a>`;
+        })
+        .catch(() => {
+          // fallback if geocoding fails
+          const now = new Date();
+          const options = { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone, year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+          const localTimeStr = now.toLocaleString('en-US', options);
+          document.getElementById('user-time').textContent = localTimeStr;
+          document.getElementById('user-location-link').innerHTML = `<a href="index.html">Go to Homepage</a>`;
+        });
+    }, () => {
+      // If geolocation denied
+      const now = new Date();
+      const options = { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone, year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+      const localTimeStr = now.toLocaleString('en-US', options);
+      document.getElementById('user-time').textContent = localTimeStr;
+      document.getElementById('user-location-link').innerHTML = `<a href="index.html">Go to Homepage</a>`;
+    });
+  } else {
+    // Geolocation not supported
+    const now = new Date();
+    const options = { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+    const localTimeStr = now.toLocaleString('en-US', options);
+    document.getElementById('user-time').textContent = localTimeStr;
+    document.getElementById('user-location-link').innerHTML = `<a href="index.html">Go to Homepage</a>`;
+  }
+}
+
+// Function to display the time of selected location
+function displaySelectedLocation(timezone) {
+  const now = new Date();
+  const options = { timeZone: timezone, year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+  const dateStr = now.toLocaleString('en-US', options);
+  const container = document.getElementById('selected-location-time');
+  container.innerHTML = `<strong>Current time in ${timezone}:</strong> ${dateStr}`;
+
+  // Bonus: link to homepage (assuming homepage is current page)
+  const linkDiv = document.getElementById('selected-location-link');
+  linkDiv.innerHTML = `<a href="index.html">Go to Homepage</a>`;
+  document.getElementById('selected-location-section').style.display = 'block';
+}
+
+// Event listener for select change
+document.getElementById('location-select').addEventListener('change', function() {
+  const selectedValue = this.value;
+  if (selectedValue) {
+    displaySelectedLocation(selectedValue);
+  } else {
+    document.getElementById('selected-location-section').style.display = 'none';
+  }
+});
+
+// Initialize displays
+displayDifferentLocations();
+updateUserLocation();
+
+// Optional: update times every second for live clock
+setInterval(() => {
+  displayDifferentLocations();
+
+  // Update user location time if available
+  if (navigator.geolocation) {
+    // Recompute user's local time
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const now = new Date();
+    const options = { timeZone: timezone, year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+    const localTimeStr = now.toLocaleString('en-US', options);
+    document.getElementById('user-time').textContent = localTimeStr;
+  }
+  // Update selected location time if displayed
+  const selectVal = document.getElementById('location-select').value;
+  if (selectVal) {
+    displaySelectedLocation(selectVal);
+  }
+}, 1000);
+</script>
+</body>
+</html>
